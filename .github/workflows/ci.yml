@@ -6,18 +6,11 @@ env:
   LEFTHOOK: 0
 
 jobs:
-  build:
-
+  verify:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [ 18.x ]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
       - uses: actions/checkout@v2
-
       - name: Cache multiple paths
         uses: actions/cache@v2
         with:
@@ -39,19 +32,26 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 18
           cache: 'yarn'
 
       - run: yarn --pure-lockfile
-      - run: yarn lint
+      - run: yarn ci
+      - run: npx semantic-release --dry-run
+        id: get-next-version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      new-release-published: ${{ steps.get-next-version.outputs.new-release-published }}
+      new-release-version: ${{ steps.get-next-version.outputs.new-release-version }}
 
   release:
-    needs: [build]
+    needs: [verify]
+    if: needs.verify.outputs.new-release-published == 'true'
     name: Release
     runs-on: ubuntu-latest
-    if: ${{github.ref == 'ref/head/main'}} || ${{github.ref == 'ref/head/next'}}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -79,14 +79,15 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 18
           cache: 'yarn'
 
       - name: Install deps
         run: yarn --pure-lockfile --offline
-
+      - name: Build
+        run: yarn build
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

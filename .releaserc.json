@@ -14,6 +14,7 @@
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
+    "semantic-release-export-data",
     "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
@@ -22,7 +23,12 @@
         "changelogFile": "CHANGELOG.md"
       }
     ],
-    "@semantic-release/npm",
+    [
+      "@semantic-release/npm",
+      {
+        "postversion": "yarn build"
+      }
+    ],
     "@semantic-release/github",
     [
       "@semantic-release/git",
