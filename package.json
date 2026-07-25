@@ -16,6 +16,7 @@
   "type": "module",
   "types": "dist/index.d.ts",
   "private": false,
+  "packageManager": "yarn@4.17.1",
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts",
